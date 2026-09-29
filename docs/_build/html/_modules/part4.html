@@ -1,0 +1,513 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>part4 &mdash; School management system 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            School management system
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">School management system</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">part4</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for part4</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="kn">import</span> <span class="n">ttk</span><span class="p">,</span> <span class="n">messagebox</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">part1</span><span class="w"> </span><span class="kn">import</span> <span class="n">valid_email</span>
+
+
+<span class="n">DATABASE</span> <span class="o">=</span> <span class="s2">"school.db"</span>
+<span class="n">BACKUP</span> <span class="o">=</span> <span class="s2">"school_backup.db"</span>
+<span class="n">connection</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DATABASE</span><span class="p">)</span>
+<span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA foreign_keys = ON"</span><span class="p">)</span>
+<span class="n">cursor</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+<span class="n">cursor</span><span class="o">.</span><span class="n">executescript</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">CREATE TABLE IF NOT EXISTS students (</span>
+<span class="s2">    student_id TEXT PRIMARY KEY,</span>
+<span class="s2">    name TEXT NOT NULL,</span>
+<span class="s2">    age INTEGER NOT NULL CHECK(age &gt;= 0),</span>
+<span class="s2">    email TEXT NOT NULL</span>
+<span class="s2">);</span>
+<span class="s2">CREATE TABLE IF NOT EXISTS instructors (</span>
+<span class="s2">    instructor_id TEXT PRIMARY KEY,</span>
+<span class="s2">    name TEXT NOT NULL,</span>
+<span class="s2">    age INTEGER NOT NULL CHECK(age &gt;= 0),</span>
+<span class="s2">    email TEXT NOT NULL</span>
+<span class="s2">);</span>
+<span class="s2">CREATE TABLE IF NOT EXISTS courses (</span>
+<span class="s2">    course_id TEXT PRIMARY KEY,</span>
+<span class="s2">    course_name TEXT NOT NULL,</span>
+<span class="s2">    instructor_id TEXT,</span>
+<span class="s2">    FOREIGN KEY(instructor_id) REFERENCES instructors(instructor_id)</span>
+<span class="s2">        ON DELETE SET NULL</span>
+<span class="s2">);</span>
+<span class="s2">CREATE TABLE IF NOT EXISTS enrollments (</span>
+<span class="s2">    student_id TEXT,</span>
+<span class="s2">    course_id TEXT,</span>
+<span class="s2">    PRIMARY KEY(student_id, course_id),</span>
+<span class="s2">    FOREIGN KEY(student_id) REFERENCES students(student_id) ON DELETE CASCADE,</span>
+<span class="s2">    FOREIGN KEY(course_id) REFERENCES courses(course_id) ON DELETE CASCADE</span>
+<span class="s2">);</span>
+<span class="s2">"""</span><span class="p">)</span>
+<span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="person_values">
+<a class="viewcode-back" href="../part4.html#part4.person_values">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">person_values</span><span class="p">():</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">name_entry</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">email_entry</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">id_entry</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"ID and name cannot be empty"</span><span class="p">)</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">age_entry</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">age</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Age cannot be negative"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_email</span><span class="p">(</span><span class="n">email</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid email"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">email</span></div>
+
+
+
+<div class="viewcode-block" id="selected_course_id">
+<a class="viewcode-back" href="../part4.html#part4.selected_course_id">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">selected_course_id</span><span class="p">():</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">course_box</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" - "</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="add_student">
+<a class="viewcode-back" href="../part4.html#part4.add_student">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_student</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">email</span> <span class="o">=</span> <span class="n">person_values</span><span class="p">()</span>
+        <span class="n">student_id</span> <span class="o">=</span> <span class="n">id_entry</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"INSERT INTO students VALUES (?, ?, ?, ?)"</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">student_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">email</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">course_id</span> <span class="o">=</span> <span class="n">selected_course_id</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">course_id</span><span class="p">:</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"INSERT INTO enrollments VALUES (?, ?)"</span><span class="p">,</span> <span class="p">(</span><span class="n">student_id</span><span class="p">,</span> <span class="n">course_id</span><span class="p">))</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">refresh</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="add_instructor">
+<a class="viewcode-back" href="../part4.html#part4.add_instructor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_instructor</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">email</span> <span class="o">=</span> <span class="n">person_values</span><span class="p">()</span>
+        <span class="n">instructor_id</span> <span class="o">=</span> <span class="n">id_entry</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"INSERT INTO instructors VALUES (?, ?, ?, ?)"</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">instructor_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">email</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">course_id</span> <span class="o">=</span> <span class="n">selected_course_id</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">course_id</span><span class="p">:</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE courses SET instructor_id=? WHERE course_id=?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">instructor_id</span><span class="p">,</span> <span class="n">course_id</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">refresh</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="add_course">
+<a class="viewcode-back" href="../part4.html#part4.add_course">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_course</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">course_id</span> <span class="o">=</span> <span class="n">id_entry</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">course_name</span> <span class="o">=</span> <span class="n">course_name_entry</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">course_id</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">course_name</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Course ID and name cannot be empty"</span><span class="p">)</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"INSERT INTO courses VALUES (?, ?, NULL)"</span><span class="p">,</span> <span class="p">(</span><span class="n">course_id</span><span class="p">,</span> <span class="n">course_name</span><span class="p">))</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">update_courses</span><span class="p">()</span>
+        <span class="n">refresh</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="register_selected_student">
+<a class="viewcode-back" href="../part4.html#part4.register_selected_student">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_selected_student</span><span class="p">():</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span>
+    <span class="n">course_id</span> <span class="o">=</span> <span class="n">selected_course_id</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">selected</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">course_id</span><span class="p">:</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="s2">"Select a student and a course"</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">record_type</span><span class="p">,</span> <span class="n">student_id</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="s2">"values"</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">record_type</span> <span class="o">!=</span> <span class="s2">"Student"</span><span class="p">:</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="s2">"The selected record is not a student"</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"INSERT INTO enrollments VALUES (?, ?)"</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">student_id</span><span class="p">),</span> <span class="n">course_id</span><span class="p">))</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">refresh</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">IntegrityError</span><span class="p">:</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="s2">"Student is already registered in this course"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="assign_selected_instructor">
+<a class="viewcode-back" href="../part4.html#part4.assign_selected_instructor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assign_selected_instructor</span><span class="p">():</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span>
+    <span class="n">course_id</span> <span class="o">=</span> <span class="n">selected_course_id</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">selected</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">course_id</span><span class="p">:</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="s2">"Select an instructor and a course"</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">record_type</span><span class="p">,</span> <span class="n">instructor_id</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="s2">"values"</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">record_type</span> <span class="o">!=</span> <span class="s2">"Instructor"</span><span class="p">:</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="s2">"The selected record is not an instructor"</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">"UPDATE courses SET instructor_id=? WHERE course_id=?"</span><span class="p">,</span>
+        <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">instructor_id</span><span class="p">),</span> <span class="n">course_id</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">refresh</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="update_selected">
+<a class="viewcode-back" href="../part4.html#part4.update_selected">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_selected</span><span class="p">():</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">selected</span><span class="p">:</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="s2">"Select a record first"</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">record_type</span><span class="p">,</span> <span class="n">record_id</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="s2">"values"</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">record_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">record_type</span> <span class="o">==</span> <span class="s2">"Student"</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">email</span> <span class="o">=</span> <span class="n">person_values</span><span class="p">()</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE students SET name=?, age=?, email=? WHERE student_id=?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">email</span><span class="p">,</span> <span class="n">record_id</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">course_id</span> <span class="o">=</span> <span class="n">selected_course_id</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">course_id</span><span class="p">:</span>
+                <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"INSERT OR IGNORE INTO enrollments VALUES (?, ?)"</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">record_id</span><span class="p">,</span> <span class="n">course_id</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">record_type</span> <span class="o">==</span> <span class="s2">"Instructor"</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">email</span> <span class="o">=</span> <span class="n">person_values</span><span class="p">()</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE instructors SET name=?, age=?, email=? WHERE instructor_id=?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="n">email</span><span class="p">,</span> <span class="n">record_id</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">course_id</span> <span class="o">=</span> <span class="n">selected_course_id</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">course_id</span><span class="p">:</span>
+                <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                    <span class="s2">"UPDATE courses SET instructor_id=? WHERE course_id=?"</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">record_id</span><span class="p">,</span> <span class="n">course_id</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">course_name</span> <span class="o">=</span> <span class="n">course_name_entry</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">course_name</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Course name cannot be empty"</span><span class="p">)</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="s2">"UPDATE courses SET course_name=? WHERE course_id=?"</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">course_name</span><span class="p">,</span> <span class="n">record_id</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">update_courses</span><span class="p">()</span>
+        <span class="n">refresh</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">connection</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="delete_selected">
+<a class="viewcode-back" href="../part4.html#part4.delete_selected">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">delete_selected</span><span class="p">():</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">selected</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">record_type</span><span class="p">,</span> <span class="n">record_id</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="s2">"values"</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">record_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
+    <span class="n">table_name</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"Student"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"students"</span><span class="p">,</span> <span class="s2">"student_id"</span><span class="p">),</span>
+        <span class="s2">"Instructor"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"instructors"</span><span class="p">,</span> <span class="s2">"instructor_id"</span><span class="p">),</span>
+        <span class="s2">"Course"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"courses"</span><span class="p">,</span> <span class="s2">"course_id"</span><span class="p">)</span>
+    <span class="p">}[</span><span class="n">record_type</span><span class="p">]</span>
+    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"DELETE FROM </span><span class="si">{</span><span class="n">table_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> WHERE </span><span class="si">{</span><span class="n">table_name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">=?"</span><span class="p">,</span> <span class="p">(</span><span class="n">record_id</span><span class="p">,))</span>
+    <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">update_courses</span><span class="p">()</span>
+    <span class="n">refresh</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="refresh">
+<a class="viewcode-back" href="../part4.html#part4.refresh">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refresh</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">get_children</span><span class="p">():</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    <span class="n">search</span> <span class="o">=</span> <span class="n">search_entry</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">queries</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s2">"Student"</span><span class="p">,</span> <span class="s2">"""</span>
+<span class="s2">            SELECT s.student_id, s.name, COALESCE(GROUP_CONCAT(c.course_name, ', '), '')</span>
+<span class="s2">            FROM students s LEFT JOIN enrollments e ON s.student_id=e.student_id</span>
+<span class="s2">            LEFT JOIN courses c ON e.course_id=c.course_id GROUP BY s.student_id</span>
+<span class="s2">        """</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"Instructor"</span><span class="p">,</span> <span class="s2">"""</span>
+<span class="s2">            SELECT i.instructor_id, i.name, COALESCE(GROUP_CONCAT(c.course_name, ', '), '')</span>
+<span class="s2">            FROM instructors i LEFT JOIN courses c ON i.instructor_id=c.instructor_id</span>
+<span class="s2">            GROUP BY i.instructor_id</span>
+<span class="s2">        """</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"Course"</span><span class="p">,</span> <span class="s2">"""</span>
+<span class="s2">            SELECT c.course_id, c.course_name, COALESCE(i.name, '')</span>
+<span class="s2">            FROM courses c LEFT JOIN instructors i ON c.instructor_id=i.instructor_id</span>
+<span class="s2">        """</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">record_type</span><span class="p">,</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">():</span>
+            <span class="n">record</span> <span class="o">=</span> <span class="p">(</span><span class="n">record_type</span><span class="p">,)</span> <span class="o">+</span> <span class="n">row</span>
+            <span class="k">if</span> <span class="n">search</span> <span class="ow">in</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">record</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">record</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="fill_form">
+<a class="viewcode-back" href="../part4.html#part4.fill_form">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fill_form</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">selection</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">selected</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">record_type</span><span class="p">,</span> <span class="n">record_id</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="s2">"values"</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">record_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">record_id</span><span class="p">)</span>
+    <span class="n">clear_form</span><span class="p">()</span>
+    <span class="n">id_entry</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">record_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">record_type</span> <span class="o">==</span> <span class="s2">"Student"</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"SELECT name, age, email FROM students WHERE student_id=?"</span><span class="p">,</span> <span class="p">(</span><span class="n">record_id</span><span class="p">,)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="n">course</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"SELECT course_id FROM enrollments WHERE student_id=?"</span><span class="p">,</span> <span class="p">(</span><span class="n">record_id</span><span class="p">,)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">record_type</span> <span class="o">==</span> <span class="s2">"Instructor"</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"SELECT name, age, email FROM instructors WHERE instructor_id=?"</span><span class="p">,</span> <span class="p">(</span><span class="n">record_id</span><span class="p">,)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="n">course</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"SELECT course_id FROM courses WHERE instructor_id=?"</span><span class="p">,</span> <span class="p">(</span><span class="n">record_id</span><span class="p">,)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"SELECT course_name FROM courses WHERE course_id=?"</span><span class="p">,</span> <span class="p">(</span><span class="n">record_id</span><span class="p">,)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="n">course_name_entry</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span>
+    <span class="n">name_entry</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">age_entry</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">email_entry</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">course</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">course_box</span><span class="p">[</span><span class="s2">"values"</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">course</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">" - "</span><span class="p">):</span>
+                <span class="n">course_box</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_courses">
+<a class="viewcode-back" href="../part4.html#part4.update_courses">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_courses</span><span class="p">():</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">course_id</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">course_name</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">for</span> <span class="n">course_id</span><span class="p">,</span> <span class="n">course_name</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"SELECT course_id, course_name FROM courses ORDER BY course_id"</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">course_box</span><span class="p">[</span><span class="s2">"values"</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span></div>
+
+
+
+<div class="viewcode-block" id="backup_database">
+<a class="viewcode-back" href="../part4.html#part4.backup_database">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">backup_database</span><span class="p">():</span>
+    <span class="n">connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">backup_connection</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">BACKUP</span><span class="p">)</span>
+    <span class="n">connection</span><span class="o">.</span><span class="n">backup</span><span class="p">(</span><span class="n">backup_connection</span><span class="p">)</span>
+    <span class="n">backup_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">messagebox</span><span class="o">.</span><span class="n">showinfo</span><span class="p">(</span><span class="s2">"Backup"</span><span class="p">,</span> <span class="s2">"school_backup.db was created"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="restore_database">
+<a class="viewcode-back" href="../part4.html#part4.restore_database">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">restore_database</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">connection</span><span class="p">,</span> <span class="n">cursor</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">BACKUP</span><span class="p">):</span>
+        <span class="n">messagebox</span><span class="o">.</span><span class="n">showerror</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="s2">"No backup file was found"</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">BACKUP</span><span class="p">,</span> <span class="n">DATABASE</span><span class="p">)</span>
+    <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DATABASE</span><span class="p">)</span>
+    <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA foreign_keys = ON"</span><span class="p">)</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">update_courses</span><span class="p">()</span>
+    <span class="n">refresh</span><span class="p">()</span>
+    <span class="n">messagebox</span><span class="o">.</span><span class="n">showinfo</span><span class="p">(</span><span class="s2">"Restore"</span><span class="p">,</span> <span class="s2">"Database restored"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="clear_form">
+<a class="viewcode-back" href="../part4.html#part4.clear_form">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clear_form</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="p">(</span><span class="n">name_entry</span><span class="p">,</span> <span class="n">age_entry</span><span class="p">,</span> <span class="n">email_entry</span><span class="p">,</span> <span class="n">id_entry</span><span class="p">,</span> <span class="n">course_name_entry</span><span class="p">):</span>
+        <span class="n">entry</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">tk</span><span class="o">.</span><span class="n">END</span><span class="p">)</span>
+    <span class="n">course_box</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span></div>
+
+
+
+<span class="n">root</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Tk</span><span class="p">()</span>
+<span class="n">root</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"School Management System - SQLite"</span><span class="p">)</span>
+<span class="n">root</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="s2">"780x650"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="entry">
+<a class="viewcode-back" href="../part4.html#part4.entry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">entry</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
+    <span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+    <span class="n">widget</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Entry</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="n">widget</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">widget</span></div>
+
+
+
+<span class="n">name_entry</span> <span class="o">=</span> <span class="n">entry</span><span class="p">(</span><span class="s2">"Name"</span><span class="p">)</span>
+<span class="n">age_entry</span> <span class="o">=</span> <span class="n">entry</span><span class="p">(</span><span class="s2">"Age"</span><span class="p">)</span>
+<span class="n">email_entry</span> <span class="o">=</span> <span class="n">entry</span><span class="p">(</span><span class="s2">"Email"</span><span class="p">)</span>
+<span class="n">id_entry</span> <span class="o">=</span> <span class="n">entry</span><span class="p">(</span><span class="s2">"ID"</span><span class="p">)</span>
+<span class="n">course_name_entry</span> <span class="o">=</span> <span class="n">entry</span><span class="p">(</span><span class="s2">"Course Name"</span><span class="p">)</span>
+<span class="n">ttk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">"Course"</span><span class="p">)</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">course_box</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Combobox</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"readonly"</span><span class="p">)</span>
+<span class="n">course_box</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="n">buttons</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+<span class="n">buttons</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">pady</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">command</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">((</span>
+    <span class="p">(</span><span class="s2">"Add Student"</span><span class="p">,</span> <span class="n">add_student</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Add Instructor"</span><span class="p">,</span> <span class="n">add_instructor</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"Add Course"</span><span class="p">,</span> <span class="n">add_course</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Update"</span><span class="p">,</span> <span class="n">update_selected</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"Delete"</span><span class="p">,</span> <span class="n">delete_selected</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Backup"</span><span class="p">,</span> <span class="n">backup_database</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"Restore"</span><span class="p">,</span> <span class="n">restore_database</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Register Course"</span><span class="p">,</span> <span class="n">register_selected_student</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"Assign Course"</span><span class="p">,</span> <span class="n">assign_selected_instructor</span><span class="p">)</span>
+<span class="p">)):</span>
+    <span class="n">ttk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">buttons</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">command</span><span class="p">)</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span>
+        <span class="n">row</span><span class="o">=</span><span class="n">index</span> <span class="o">//</span> <span class="mi">5</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="n">index</span> <span class="o">%</span> <span class="mi">5</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">3</span>
+    <span class="p">)</span>
+
+<span class="n">search_entry</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Entry</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+<span class="n">search_entry</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">search_entry</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">"&lt;KeyRelease&gt;"</span><span class="p">,</span> <span class="n">refresh</span><span class="p">)</span>
+<span class="n">table</span> <span class="o">=</span> <span class="n">ttk</span><span class="o">.</span><span class="n">Treeview</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">(</span><span class="s2">"Type"</span><span class="p">,</span> <span class="s2">"ID"</span><span class="p">,</span> <span class="s2">"Name"</span><span class="p">,</span> <span class="s2">"Course"</span><span class="p">),</span> <span class="n">show</span><span class="o">=</span><span class="s2">"headings"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"Type"</span><span class="p">,</span> <span class="s2">"ID"</span><span class="p">,</span> <span class="s2">"Name"</span><span class="p">,</span> <span class="s2">"Course"</span><span class="p">):</span>
+    <span class="n">table</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">column</span><span class="p">)</span>
+<span class="n">table</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="s2">"both"</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">padx</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">pady</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">table</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s2">"&lt;&lt;TreeviewSelect&gt;&gt;"</span><span class="p">,</span> <span class="n">fill_form</span><span class="p">)</span>
+
+<span class="n">update_courses</span><span class="p">()</span>
+<span class="n">refresh</span><span class="p">()</span>
+<span class="n">root</span><span class="o">.</span><span class="n">protocol</span><span class="p">(</span><span class="s2">"WM_DELETE_WINDOW"</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">(),</span> <span class="n">root</span><span class="o">.</span><span class="n">destroy</span><span class="p">()))</span>
+<span class="n">root</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Tara El Khoury.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
