@@ -26,3 +26,5 @@ How to run PyQt:
 python part3.py
 
 Both interfaces are included on the main branch. 
+
+Tara El Khoury
